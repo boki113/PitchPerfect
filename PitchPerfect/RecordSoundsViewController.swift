@@ -13,6 +13,8 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
 
     let LabelTextRecordingInProgess = "Recording in Progress"
     let LabelTextTaptoRecord = "Tap to Record"
+    let ErrorMessageRecordingFailed = "Recording failed while trying to stop the recording. Please try again"
+    let StopRecordingSegueIdentifier = "stopRecording"
     
     var audioRecorder: AVAudioRecorder!
     
@@ -36,7 +38,6 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
         let recordingName = "recordedVoice.wav"
         let pathArray = [dirPath, recordingName]
         let filePath = URL(string: pathArray.joined(separator: "/"))
-        print(filePath ?? "no file path found")
         
         let session = AVAudioSession.sharedInstance()
         try! session.setCategory(AVAudioSessionCategoryPlayAndRecord, with:AVAudioSessionCategoryOptions.defaultToSpeaker)
@@ -58,17 +59,19 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
     
     func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
         if flag {
-            performSegue(withIdentifier: "stopRecording", sender: audioRecorder.url)
+            performSegue(withIdentifier: StopRecordingSegueIdentifier, sender: audioRecorder.url)
         } else {
-            print("recording was not successfull...")
+             showAlert("Recording failed", message: ErrorMessageRecordingFailed)
         }
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "stopRecording" {
-            let playSoundsVC = segue.destination as! PlaySoundsViewController
-            let recordedAudioURL = sender as! URL
-            playSoundsVC.recordedAudioURL = recordedAudioURL
+            if let playSoundsVC = segue.destination as? PlaySoundsViewController {
+                if let recordedAudioURL = sender as? URL {
+                    playSoundsVC.recordedAudioURL = recordedAudioURL
+                }
+            }
         }
     }
     
@@ -88,4 +91,9 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
         recordingLabel.text =  LabelTextTaptoRecord
     }
     
+    func showAlert(_ title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Recording Alert" , style: .default, handler: nil))
+        self.present(alert, animated: true, completion: nil)
+    }
 }
